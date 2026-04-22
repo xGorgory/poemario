@@ -1,0 +1,6 @@
+# Archivos viejos o temporales
+poemario.html
+poemario.js
+.DS_Store
+Thumbs.db
+*.log

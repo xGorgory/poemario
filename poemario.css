@@ -1,0 +1,705 @@
+/* ==============================================
+   POEMARIO — Versos del Umbral
+   Stylesheet principal
+   ============================================== */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── TOKENS ── */
+:root {
+  --ink:         #1a1510;
+  --ink-soft:    #4a4035;
+  --ink-faint:   #8a7e70;
+  --paper:       #f5f0e8;
+  --paper-warm:  #ede7d9;
+  --paper-deep:  #d9d0bf;
+  --accent:      #8b3a2a;
+  --accent-soft: rgba(139,58,42,0.12);
+  --ease-out:    cubic-bezier(0.25,0.46,0.45,0.94);
+  --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+}
+
+[data-theme="dark"] {
+  --ink:         #f0ebe0;
+  --ink-soft:    #c8bfb0;
+  --ink-faint:   #6a6050;
+  --paper:       #0e0c09;
+  --paper-warm:  #1a1714;
+  --paper-deep:  #2e2820;
+  --accent:      #c46450;
+  --accent-soft: rgba(196,100,80,0.15);
+}
+
+/* ── BASE ── */
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.8;
+  min-height: 100vh;
+  overflow-x: hidden;
+  cursor: none;
+  transition: background 0.5s var(--ease-out), color 0.5s var(--ease-out);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.6;
+}
+
+/* ── CURSOR ── */
+.cursor {
+  position: fixed;
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10001;
+  transform: translate(-50%,-50%);
+  transition: width .2s, height .2s, background .2s;
+  will-change: left, top;
+}
+.cursor-ring {
+  position: fixed;
+  width: 32px; height: 32px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10000;
+  transform: translate(-50%,-50%);
+  opacity: 0.4;
+  transition: width .3s var(--ease-out), height .3s var(--ease-out);
+  will-change: left, top;
+}
+.cursor.expanded  { width: 0; height: 0; }
+.cursor-ring.expanded { width: 48px; height: 48px; opacity: 0.2; }
+
+/* ── HEADER ── */
+header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 3rem;
+  background: var(--paper);
+  border-bottom: 1px solid var(--paper-deep);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: background .5s var(--ease-out), border-color .5s var(--ease-out), padding .3s ease;
+}
+header.scrolled { padding: 1rem 3rem; }
+
+.logo {
+  font-family: 'Marcellus', serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  transition: color .3s;
+}
+.logo span {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  margin: 0 0.4em;
+  vertical-align: middle;
+  position: relative; top: -1px;
+  transition: transform .3s var(--ease-spring);
+}
+.logo:hover span { transform: scale(1.6); }
+
+.header-actions { display: flex; align-items: center; gap: 1.2rem; }
+
+.btn-theme {
+  font-size: 1rem;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--paper-deep);
+  background: transparent;
+  color: var(--ink-faint);
+  display: flex; align-items: center; justify-content: center;
+  cursor: none;
+  transition: all .3s var(--ease-spring);
+}
+.btn-theme:hover { border-color: var(--accent); color: var(--accent); transform: rotate(30deg) scale(1.1); }
+
+.btn-add {
+  font-family: 'Marcellus', serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-faint);
+  padding: 0.5rem 1rem;
+  cursor: none;
+  transition: all .4s;
+  opacity: 0.25;
+}
+.btn-add:hover { opacity: 1; border-color: var(--paper-deep); color: var(--ink); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 6rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+.hero-canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  opacity: 0.4;
+  transition: opacity .5s;
+}
+[data-theme="dark"] .hero-canvas { opacity: 0.6; }
+
+.hero > *:not(.hero-canvas):not(.scroll-cue) { position: relative; z-index: 1; }
+
+.hero-line {
+  width: 1px; height: 80px;
+  background: linear-gradient(to bottom, transparent, var(--paper-deep));
+  margin: 0 auto 3rem;
+  animation: lineGrow 1.5s ease forwards;
+  transform-origin: top;
+}
+@keyframes lineGrow {
+  from { transform: scaleY(0); opacity: 0; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+.hero-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 2rem;
+  animation: fadeUp 1s 0.3s ease both;
+}
+.hero h1 {
+  font-family: 'EB Garamond', serif;
+  font-size: clamp(3rem,8vw,6.5rem);
+  font-weight: 400; font-style: italic;
+  line-height: 1.1;
+  color: var(--ink);
+  animation: fadeUp 1s 0.5s ease both;
+}
+.hero-sub {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 2rem;
+  animation: fadeUp 1s 0.7s ease both;
+}
+.hero-divider {
+  display: flex; align-items: center; gap: 1.5rem;
+  margin: 3rem auto; width: fit-content;
+  animation: fadeUp 1s 0.9s ease both;
+}
+.hero-divider::before, .hero-divider::after {
+  content: ''; display: block;
+  width: 60px; height: 1px;
+  background: var(--paper-deep);
+}
+.hero-divider-mark { font-size: 0.5rem; color: var(--accent); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.scroll-cue {
+  position: absolute; bottom: 3rem; left: 50%;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  animation: fadeUp 1s 1.2s ease both;
+  z-index: 1;
+}
+.scroll-cue span {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.7rem; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.scroll-arrow {
+  width: 1px; height: 40px;
+  background: var(--paper-deep);
+  position: relative; overflow: hidden;
+}
+.scroll-arrow::after {
+  content: '';
+  position: absolute; top: -100%; left: 0;
+  width: 100%; height: 100%;
+  background: var(--accent);
+  animation: scrollDrop 1.8s ease infinite;
+}
+@keyframes scrollDrop { from { top: -100%; } to { top: 200%; } }
+
+/* ── FILTER BAR ── */
+.filter-bar {
+  display: flex; flex-wrap: wrap; gap: 0.6rem;
+  margin-bottom: 2.5rem;
+}
+.filter-pill {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.72rem; letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 0.4rem 1.1rem;
+  border: 1px solid var(--paper-deep);
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: none;
+  transition: all .25s ease;
+}
+.filter-pill:hover { border-color: var(--accent); color: var(--accent); }
+.filter-pill.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* ── POEMS SECTION ── */
+.poems-section {
+  padding: 4rem 3rem 6rem;
+  max-width: 1200px; margin: 0 auto;
+}
+.section-header {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 2rem; padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--paper-deep);
+}
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.75rem; letter-spacing: 0.35em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.poem-count {
+  font-family: 'EB Garamond', serif;
+  font-style: italic; font-size: 0.9rem;
+  color: var(--ink-faint);
+}
+
+/* ── GRID & CARDS ── */
+.poems-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+  gap: 2px;
+}
+
+.poem-card {
+  background: var(--paper);
+  border: 1px solid var(--paper-deep);
+  padding: 2.5rem;
+  position: relative; overflow: hidden;
+  cursor: none;
+  opacity: 0; transform: translateY(28px);
+  transition:
+    transform .45s var(--ease-out),
+    box-shadow .45s ease,
+    background .5s ease,
+    border-color .5s ease,
+    opacity .55s ease;
+}
+.poem-card.revealed { opacity: 1; transform: translateY(0); }
+
+.poem-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--accent);
+  transform: scaleY(0); transform-origin: bottom;
+  transition: transform .4s var(--ease-out);
+}
+.poem-card:hover { transform: translateY(-6px); box-shadow: 0 20px 60px rgba(26,21,16,0.1); z-index: 2; }
+.poem-card:hover::before { transform: scaleY(1); }
+
+.card-meta {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.8rem;
+}
+.card-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.7rem; letter-spacing: 0.3em; color: var(--ink-faint);
+}
+.card-tag {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.68rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--accent);
+  background: var(--accent-soft); padding: 0.2rem 0.6rem;
+}
+.poem-title {
+  font-family: 'EB Garamond', serif;
+  font-size: 1.5rem; font-weight: 400; font-style: italic;
+  line-height: 1.3; margin-bottom: 1.2rem; color: var(--ink);
+}
+.poem-excerpt {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.95rem; line-height: 1.9; color: var(--ink-soft);
+  white-space: pre-line; position: relative;
+  max-height: 7em; overflow: hidden;
+}
+.poem-excerpt::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2.5em;
+  background: linear-gradient(to bottom, transparent, var(--paper));
+  pointer-events: none;
+  transition: background .5s ease;
+}
+.card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 1.8rem; padding-top: 1.2rem;
+  border-top: 1px solid var(--paper-deep);
+}
+.card-author {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.8rem; letter-spacing: 0.1em;
+  color: var(--ink-faint); font-style: italic;
+}
+.card-date {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.72rem; letter-spacing: 0.12em; color: var(--ink-faint);
+}
+
+/* ── FEATURED CARD ── */
+.poem-card.featured {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 3rem; padding: 4rem;
+  background: var(--paper-warm);
+}
+.poem-card.featured .poem-title { font-size: clamp(2rem,4vw,3rem); }
+.poem-card.featured .poem-excerpt { max-height: none; }
+.poem-card.featured .poem-excerpt::after { background: linear-gradient(to bottom, transparent, var(--paper-warm)); }
+
+.featured-bg-number {
+  position: absolute; top: 50%; right: 3rem;
+  transform: translateY(-50%);
+  font-family: 'EB Garamond', serif;
+  font-size: clamp(8rem, 15vw, 14rem);
+  font-style: italic; color: var(--ink);
+  opacity: 0.04; pointer-events: none;
+  line-height: 1; user-select: none;
+}
+.featured-right { display: flex; flex-direction: column; justify-content: flex-end; }
+.featured-full-poem {
+  font-family: 'EB Garamond', serif;
+  font-size: 1rem; line-height: 2; color: var(--ink-soft);
+  white-space: pre-line;
+  border-left: 1px solid var(--paper-deep);
+  padding-left: 2rem;
+}
+
+/* ── MODALS ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,21,16,0.55);
+  backdrop-filter: blur(6px);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem;
+  opacity: 0; pointer-events: none;
+  transition: opacity .4s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--paper);
+  width: 100%; max-width: 420px;
+  padding: 3.5rem; position: relative;
+  transform: translateY(24px);
+  transition: transform .4s var(--ease-out), background .5s ease;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-close {
+  position: absolute; top: 1.5rem; right: 1.5rem;
+  background: none; border: none;
+  font-size: 1.1rem; color: var(--ink-faint);
+  cursor: none; transition: color .2s;
+}
+.modal-close:hover { color: var(--ink); }
+
+.modal-heading {
+  font-family: 'Marcellus', serif;
+  font-size: 0.72rem; letter-spacing: 0.35em;
+  text-transform: uppercase; color: var(--ink-faint);
+  margin-bottom: 0.5rem;
+}
+.modal-subheading {
+  font-family: 'EB Garamond', serif;
+  font-style: italic; font-size: 1rem;
+  color: var(--ink-soft); margin-bottom: 2.8rem;
+}
+
+/* ── PIN ── */
+.pin-display { display: flex; justify-content: center; gap: 1.4rem; margin-bottom: 2.8rem; }
+.pin-dot {
+  width: 13px; height: 13px;
+  border-radius: 50%; border: 1px solid var(--paper-deep);
+  background: transparent;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+.pin-dot.filled { background: var(--ink); border-color: var(--ink); transform: scale(1.1); }
+.pin-dot.error  { background: var(--accent); border-color: var(--accent); }
+.pin-dots-wrap.shake { animation: shake .45s ease; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  15%     { transform: translateX(-7px); }
+  35%     { transform: translateX(7px); }
+  55%     { transform: translateX(-4px); }
+  75%     { transform: translateX(4px); }
+}
+.numpad {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem;
+}
+.numpad-btn {
+  font-family: 'Marcellus', serif; font-size: 1.15rem;
+  padding: 1rem; border: 1px solid var(--paper-deep);
+  background: transparent; color: var(--ink);
+  cursor: none; transition: all .18s; user-select: none;
+}
+.numpad-btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.numpad-btn:active { transform: scale(0.95); }
+.numpad-btn.del { font-size: 0.8rem; letter-spacing: 0.1em; color: var(--ink-faint); }
+.numpad-btn.zero { grid-column: 2; }
+.pin-error-msg {
+  text-align: center; font-family: 'Cormorant Garamond', serif;
+  font-size: 0.8rem; color: var(--accent); letter-spacing: 0.08em;
+  margin-top: 1.2rem; min-height: 1.3em;
+}
+
+/* ── ADD FORM ── */
+.modal.add-modal { max-width: 620px; }
+.form-field { margin-bottom: 1.8rem; }
+.form-label {
+  display: block; font-family: 'Cormorant Garamond', serif;
+  font-size: 0.75rem; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--ink-faint);
+  margin-bottom: 0.55rem;
+}
+.form-input, .form-textarea, .form-select {
+  width: 100%; background: transparent; border: none;
+  border-bottom: 1px solid var(--paper-deep);
+  padding: 0.55rem 0;
+  font-family: 'EB Garamond', serif; font-size: 1rem;
+  color: var(--ink); outline: none;
+  transition: border-color .3s; resize: none;
+  -webkit-appearance: none;
+}
+.form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--accent); }
+.form-textarea { min-height: 180px; line-height: 1.8; }
+.modal-submit {
+  width: 100%; background: var(--ink); color: var(--paper);
+  border: none; padding: 1rem;
+  font-family: 'Marcellus', serif; font-size: 0.78rem;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  cursor: none; transition: background .3s; margin-top: 0.5rem;
+}
+.modal-submit:hover { background: var(--accent); }
+
+/* ── READER MODAL ── */
+.modal.reader-modal {
+  max-width: 580px;
+  text-align: center;
+  position: relative;
+}
+.reader-poem-number {
+  position: absolute; top: 2rem; right: 2.5rem;
+  font-family: 'EB Garamond', serif;
+  font-size: 5rem; font-style: italic;
+  color: var(--ink); opacity: 0.05;
+  line-height: 1; pointer-events: none;
+  user-select: none;
+}
+.reader-poem-title {
+  font-family: 'EB Garamond', serif;
+  font-size: 2.2rem; font-style: italic; font-weight: 400;
+  margin-bottom: 0.5rem; color: var(--ink);
+}
+.reader-author {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.85rem; letter-spacing: 0.2em;
+  color: var(--ink-faint); margin-bottom: 2.5rem;
+}
+.reader-divider {
+  width: 36px; height: 1px;
+  background: var(--paper-deep); margin: 0 auto 2.5rem;
+}
+.reader-poem-body {
+  font-family: 'EB Garamond', serif;
+  font-size: 1.2rem; line-height: 2.3; color: var(--ink-soft);
+  white-space: pre-line; text-align: left;
+}
+.reader-tag {
+  display: inline-block;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.68rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--accent);
+  background: var(--accent-soft);
+  padding: 0.3rem 0.8rem; margin-top: 2.5rem;
+}
+
+/* Reader navigation */
+.reader-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 2.5rem; padding-top: 1.5rem;
+  border-top: 1px solid var(--paper-deep);
+}
+.reader-nav-btn {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.75rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--ink-faint);
+  background: transparent; border: none; cursor: none;
+  transition: color .2s;
+}
+.reader-nav-btn:hover { color: var(--accent); }
+.reader-nav-btn:disabled { opacity: 0.2; pointer-events: none; }
+
+.btn-print {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.72rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--ink-faint);
+  background: transparent; border: 1px solid var(--paper-deep);
+  padding: 0.4rem 0.9rem; cursor: none;
+  transition: all .2s;
+}
+.btn-print:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 2rem; right: 2rem;
+  background: var(--ink); color: var(--paper);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.85rem; letter-spacing: 0.1em;
+  padding: 0.8rem 1.6rem; z-index: 500;
+  transform: translateY(20px); opacity: 0;
+  transition: all .4s var(--ease-out);
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--paper-deep);
+  padding: 3rem;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: border-color .5s ease;
+}
+.footer-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.8rem; letter-spacing: 0.15em;
+  color: var(--ink-faint); font-style: italic;
+}
+.footer-mark { font-size: 0.4rem; color: var(--accent); }
+
+/* ── PRINT ── */
+@media print {
+  header, footer, .filter-bar, .section-header,
+  .poems-grid, .modal-overlay:not(#reader-modal),
+  .btn-print, .reader-nav, .modal-close,
+  .reader-poem-number, .reader-tag,
+  body::before, .cursor, .cursor-ring,
+  .hero, .scroll-cue { display: none !important; }
+
+  body { background: white !important; color: black !important; cursor: auto !important; }
+
+  #reader-modal {
+    position: static !important; background: transparent !important;
+    opacity: 1 !important; pointer-events: all !important;
+    padding: 0 !important; display: block !important;
+  }
+  #reader-modal .modal {
+    transform: none !important; box-shadow: none !important;
+    max-width: 100% !important; padding: 3rem !important;
+    background: white !important;
+  }
+  .reader-poem-title { font-size: 2.5rem !important; color: black !important; }
+  .reader-poem-body { font-size: 1.1rem !important; line-height: 2.2 !important; color: #333 !important; }
+  .reader-author { color: #666 !important; }
+}
+
+/* ── ADMIN BADGE ── */
+.admin-badge {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.65rem; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--accent);
+  border: 1px solid var(--accent-soft);
+  padding: 0.2rem 0.7rem;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+}
+.admin-badge::before { content: '●'; font-size: 0.45rem; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center; padding: 5rem 2rem;
+  font-family: 'EB Garamond', serif;
+  font-size: 1.1rem; color: var(--ink-faint); line-height: 2;
+}
+
+/* ── DELETE ── */
+.btn-delete {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.72rem; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--accent);
+  background: transparent; border: 1px solid var(--accent-soft);
+  padding: 0.4rem 0.9rem; cursor: none;
+  transition: all .2s;
+}
+.btn-delete:hover { background: var(--accent); color: var(--paper); }
+
+.delete-confirm {
+  display: none; flex-direction: column; align-items: center; gap: 1rem;
+  margin-top: 1.5rem; padding: 1.5rem;
+  border: 1px solid var(--accent-soft);
+  background: var(--accent-glow, rgba(139,58,42,0.06));
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.9rem; color: var(--ink-soft);
+}
+.delete-confirm-actions { display: flex; gap: 0.8rem; }
+.delete-confirm-yes {
+  font-family: 'Marcellus', serif; font-size: 0.72rem; letter-spacing: 0.15em;
+  text-transform: uppercase; background: var(--accent); color: var(--paper);
+  border: none; padding: 0.5rem 1.2rem; cursor: none; transition: opacity .2s;
+}
+.delete-confirm-yes:hover { opacity: 0.85; }
+.delete-confirm-no {
+  font-family: 'Marcellus', serif; font-size: 0.72rem; letter-spacing: 0.15em;
+  text-transform: uppercase; background: transparent; color: var(--ink-faint);
+  border: 1px solid var(--paper-deep); padding: 0.5rem 1.2rem; cursor: none; transition: all .2s;
+}
+.delete-confirm-no:hover { border-color: var(--ink); color: var(--ink); }
+
+/* Reader center actions */
+.reader-center-actions { display: flex; gap: 0.6rem; align-items: center; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  header { padding: 1.2rem 1.5rem; }
+  header.scrolled { padding: 0.9rem 1.5rem; }
+  .poems-section { padding: 3rem 1.5rem; }
+  .poem-card.featured { grid-template-columns: 1fr; padding: 2rem; }
+  .featured-right { display: none; }
+  .modal { padding: 2rem; }
+  .reader-poem-body { font-size: 1.05rem; }
+  .cursor, .cursor-ring { display: none; }
+  body { cursor: auto; }
+  button, .poem-card, .filter-pill, .numpad-btn,
+  .modal-close, .reader-nav-btn, .btn-print,
+  .btn-theme, .btn-add, .modal-submit { cursor: pointer; }
+}

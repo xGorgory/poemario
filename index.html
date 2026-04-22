@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Versos del Umbral — Poemario Personal</title>
+  <meta name="description" content="Un poemario personal en constante florecimiento. Colección íntima de versos propios y admirados." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Marcellus&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="poemario.css" />
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor"      id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- ── HEADER ── -->
+<header>
+  <a class="logo" href="#">Versos<span></span>del<span></span>Umbral</a>
+  <div class="header-actions">
+    <span class="admin-badge" id="admin-badge" style="display:none">Admin</span>
+    <button class="btn-theme" id="btn-theme" title="Modo oscuro">☽</button>
+    <button class="btn-add"   onclick="openPinModal()" title="">+ Añadir</button>
+  </div>
+</header>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <canvas class="hero-canvas" id="hero-canvas"></canvas>
+  <div class="hero-line"></div>
+  <p class="hero-number">Gorgory</p>
+  <h1>El lugar donde<br>viven mis pensamientos</h1>
+  <p class="hero-sub">En constante </p>
+  <div class="hero-divider"><span class="hero-divider-mark">✦</span></div>
+  <div class="scroll-cue">
+    <span>Descender</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ── COLECCIÓN ── -->
+<section class="poems-section" id="poemas">
+  <div class="section-header">
+    <span class="section-title">Mis Sentires</span>
+    <span class="poem-count" id="count-label"></span>
+  </div>
+  <div class="filter-bar" id="filter-bar">
+    <button class="filter-pill active" data-filter="all">Todos</button>
+    <button class="filter-pill" data-filter="Amor">Amor</button>
+    <button class="filter-pill" data-filter="Melancolía">Melancolía</button>
+    <button class="filter-pill" data-filter="Naturaleza">Naturaleza</button>
+    <button class="filter-pill" data-filter="Tiempo">Tiempo</button>
+    <button class="filter-pill" data-filter="Silencio">Silencio</button>
+    <button class="filter-pill" data-filter="Identidad">Identidad</button>
+  </div>
+  <div class="poems-grid" id="poems-grid"></div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <span class="footer-text">«La poesía es el eco de la melodía del universo en los seres humanos.»</span>
+  <span class="footer-mark">✦</span>
+  <span class="footer-text">Gorgory &copy; 2026</span>
+</footer>
+
+<!-- ── MODAL: PIN ── -->
+<div class="modal-overlay" id="pin-modal" onclick="closePinOnOverlay(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closePinModal()">✕</button>
+    <p class="modal-heading">Acceso restringido</p>
+    <p class="modal-subheading">Introduce tu PIN para continuar</p>
+    <div class="pin-dots-wrap" id="pin-dots-wrap">
+      <div class="pin-display">
+        <div class="pin-dot" id="dot-0"></div>
+        <div class="pin-dot" id="dot-1"></div>
+        <div class="pin-dot" id="dot-2"></div>
+        <div class="pin-dot" id="dot-3"></div>
+      </div>
+    </div>
+    <div class="numpad">
+      <button class="numpad-btn" onclick="pinInput('1')">1</button>
+      <button class="numpad-btn" onclick="pinInput('2')">2</button>
+      <button class="numpad-btn" onclick="pinInput('3')">3</button>
+      <button class="numpad-btn" onclick="pinInput('4')">4</button>
+      <button class="numpad-btn" onclick="pinInput('5')">5</button>
+      <button class="numpad-btn" onclick="pinInput('6')">6</button>
+      <button class="numpad-btn" onclick="pinInput('7')">7</button>
+      <button class="numpad-btn" onclick="pinInput('8')">8</button>
+      <button class="numpad-btn" onclick="pinInput('9')">9</button>
+      <button class="numpad-btn del" onclick="pinDelete()">⌫ Borrar</button>
+      <button class="numpad-btn zero" onclick="pinInput('0')">0</button>
+    </div>
+    <p class="pin-error-msg" id="pin-error"></p>
+  </div>
+</div>
+
+<!-- ── MODAL: AÑADIR ── -->
+<div class="modal-overlay" id="add-modal" onclick="closeAddOnOverlay(event)">
+  <div class="modal add-modal">
+    <button class="modal-close" onclick="closeAddModal()">✕</button>
+    <p class="modal-heading">Nuevo poema</p>
+    <p class="modal-subheading">Añade un verso a la colección</p>
+    <div class="form-field">
+      <label class="form-label">Título</label>
+      <input class="form-input" id="f-title" type="text" placeholder="El nombre del verso…" />
+    </div>
+    <div class="form-field">
+      <label class="form-label">Autor</label>
+      <input class="form-input" id="f-author" type="text" placeholder="Nombre del poeta…" />
+    </div>
+    <div class="form-field">
+      <label class="form-label">Temática</label>
+      <select class="form-select" id="f-tag">
+        <option value="Amor">Amor</option>
+        <option value="Melancolía">Melancolía</option>
+        <option value="Naturaleza">Naturaleza</option>
+        <option value="Tiempo">Tiempo</option>
+        <option value="Silencio">Silencio</option>
+        <option value="Identidad">Identidad</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Poema</label>
+      <textarea class="form-textarea" id="f-poem" placeholder="Escribe o pega tu poema aquí…"></textarea>
+    </div>
+    <button class="modal-submit" onclick="submitPoem()">Publicar en el poemario</button>
+  </div>
+</div>
+
+<!-- ── MODAL: LECTOR ── -->
+<div class="modal-overlay" id="reader-modal" onclick="closeReaderOnOverlay(event)">
+  <div class="modal reader-modal">
+    <button class="modal-close" onclick="closeReaderModal()">✕</button>
+    <span class="reader-poem-number" id="r-num"></span>
+    <h2  class="reader-poem-title"  id="r-title"></h2>
+    <p   class="reader-author"      id="r-author"></p>
+    <div class="reader-divider"></div>
+    <div class="reader-poem-body"   id="r-body"></div>
+    <span class="reader-tag"        id="r-tag"></span>
+
+    <!-- Confirmación de borrado (oculta por defecto) -->
+    <div class="delete-confirm" id="delete-confirm" style="display:none">
+      <p>¿Eliminar este poema?</p>
+      <div class="delete-confirm-actions">
+        <button class="delete-confirm-yes" onclick="executeDelete()">Sí, eliminar</button>
+        <button class="delete-confirm-no"  onclick="confirmDelete()">Cancelar</button>
+      </div>
+    </div>
+
+    <div class="reader-nav">
+      <button class="reader-nav-btn" id="r-prev" onclick="readerNavigate(-1)">← Anterior</button>
+      <div class="reader-center-actions">
+        <button class="btn-print"   onclick="printPoem()">Imprimir</button>
+        <button class="btn-delete"  id="btn-delete" onclick="confirmDelete()" style="display:none">🗑 Borrar</button>
+      </div>
+      <button class="reader-nav-btn" id="r-next" onclick="readerNavigate(1)">Siguiente →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Scripts en orden de dependencia -->
+<script src="assets/js/data.js"></script>
+<script src="assets/js/particles.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
