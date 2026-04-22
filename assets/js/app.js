@@ -1,6 +1,6 @@
 'use strict';
 // ── APP PRINCIPAL — Versos del Umbral ───────────────
-// Requiere: data.js, particles.js  (cargados antes)
+// Depende de: supabase.config.js, data.js, particles.js
 
 /* ─── Estado ─── */
 const PIN        = '5010';
@@ -9,6 +9,7 @@ let pinBlocked   = false;
 let isAdmin      = false;
 let activeFilter = 'all';
 let readerIndex  = 0;
+let _poems       = [];   // cache local
 
 /* ─── Tema ─── */
 function initTheme() {
@@ -88,13 +89,28 @@ function initReveal() {
   });
 }
 
+/* ─── Loading state ─── */
+function setLoading(on) {
+  document.getElementById('poems-grid').classList.toggle('loading', on);
+}
+
 /* ─── Render ─── */
-function renderPoems() {
-  const poems   = getPoems();
-  const visible = activeFilter === 'all' ? poems : poems.filter(p => p.tag === activeFilter);
-  const grid    = document.getElementById('poems-grid');
-  animateCount(visible.length);
+async function renderPoems() {
+  const grid = document.getElementById('poems-grid');
+  setLoading(true);
   grid.innerHTML = '';
+
+  try {
+    _poems = await getPoems();
+  } catch (e) {
+    grid.innerHTML = `<p class="empty-state">Error al conectar con la base de datos.<br><em>${e.message}</em></p>`;
+    setLoading(false);
+    return;
+  }
+
+  const visible = activeFilter === 'all' ? _poems : _poems.filter(p => p.tag === activeFilter);
+  setLoading(false);
+  animateCount(visible.length);
 
   if (visible.length === 0) {
     grid.innerHTML = `<p class="empty-state">Aún no hay poemas en esta colección.<br><em>Añade el primero pulsando «+ Añadir».</em></p>`;
@@ -102,7 +118,7 @@ function renderPoems() {
   }
 
   visible.forEach(poem => {
-    const idx  = poems.indexOf(poem);
+    const idx  = _poems.indexOf(poem);
     const num  = String(poem.id).padStart(3, '0');
     const card = document.createElement('div');
 
@@ -138,84 +154,104 @@ function openPinModal()  { pinValue=''; updateDots(); document.getElementById('p
 function closePinModal() { toggle('pin-modal', false); pinValue=''; updateDots(); }
 function closePinOnOverlay(e) { if (e.target===document.getElementById('pin-modal')) closePinModal(); }
 function updateDots() {
-  for (let i=0;i<4;i++) { const d=document.getElementById('dot-'+i); d.classList.toggle('filled',i<pinValue.length); d.classList.remove('error'); }
+  for (let i=0; i<4; i++) {
+    const d = document.getElementById('dot-'+i);
+    d.classList.toggle('filled', i < pinValue.length);
+    d.classList.remove('error');
+  }
 }
 function pinInput(digit) {
-  if (pinBlocked||pinValue.length>=4) return;
-  pinValue+=digit; updateDots();
-  if (pinValue.length===4) { pinBlocked=true; setTimeout(checkPin,200); }
+  if (pinBlocked || pinValue.length >= 4) return;
+  pinValue += digit; updateDots();
+  if (pinValue.length === 4) { pinBlocked = true; setTimeout(checkPin, 200); }
 }
-function pinDelete() { if (!pinBlocked) { pinValue=pinValue.slice(0,-1); updateDots(); } }
+function pinDelete() { if (!pinBlocked) { pinValue = pinValue.slice(0,-1); updateDots(); } }
 function checkPin() {
-  if (pinValue===PIN) {
-    isAdmin=true; document.getElementById('admin-badge').style.display='inline-flex';
+  if (pinValue === PIN) {
+    isAdmin = true;
+    document.getElementById('admin-badge').style.display = 'inline-flex';
     closePinModal(); openAddModal();
   } else {
-    for(let i=0;i<4;i++) document.getElementById('dot-'+i).classList.add('error');
-    const w=document.getElementById('pin-dots-wrap'); w.classList.add('shake');
-    document.getElementById('pin-error').textContent='PIN incorrecto. Inténtalo de nuevo.';
-    setTimeout(()=>{ w.classList.remove('shake'); pinValue=''; pinBlocked=false; updateDots(); document.getElementById('pin-error').textContent=''; },850);
+    for (let i=0; i<4; i++) document.getElementById('dot-'+i).classList.add('error');
+    const w = document.getElementById('pin-dots-wrap'); w.classList.add('shake');
+    document.getElementById('pin-error').textContent = 'PIN incorrecto. Inténtalo de nuevo.';
+    setTimeout(() => { w.classList.remove('shake'); pinValue=''; pinBlocked=false; updateDots(); document.getElementById('pin-error').textContent=''; }, 850);
   }
 }
 
 /* ─── ADD MODAL ─── */
-function openAddModal()  { toggle('add-modal', true); setTimeout(()=>document.getElementById('f-title').focus(),400); }
+function openAddModal()  { toggle('add-modal', true); setTimeout(() => document.getElementById('f-title').focus(), 400); }
 function closeAddModal() { toggle('add-modal', false); }
 function closeAddOnOverlay(e) { if (e.target===document.getElementById('add-modal')) closeAddModal(); }
-function submitPoem() {
+
+async function submitPoem() {
   const title  = document.getElementById('f-title').value.trim();
   const author = document.getElementById('f-author').value.trim();
   const tag    = document.getElementById('f-tag').value;
   const body   = document.getElementById('f-poem').value.trim();
-  if (!title||!author||!body) { showToast('Por favor completa todos los campos.'); return; }
-  addPoem({ title, author, tag, body });
-  renderPoems(); closeAddModal(); showToast('Poema añadido al poemario ✦');
-  ['f-title','f-author','f-poem'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('f-tag').selectedIndex=0;
+  if (!title || !author || !body) { showToast('Por favor completa todos los campos.'); return; }
+
+  const btn = document.querySelector('.modal-submit');
+  btn.textContent = 'Guardando…'; btn.disabled = true;
+
+  try {
+    await addPoem({ title, author, tag, body });
+    await renderPoems();
+    closeAddModal();
+    showToast('Poema añadido al poemario ✦');
+    ['f-title','f-author','f-poem'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-tag').selectedIndex = 0;
+  } catch (e) {
+    showToast('Error al guardar: ' + e.message);
+  } finally {
+    btn.textContent = 'Publicar en el poemario'; btn.disabled = false;
+  }
 }
 
 /* ─── READER MODAL ─── */
 function openReader(idx) {
-  const poems = getPoems();
   readerIndex = idx;
-  const poem  = poems[idx];
-  const num   = String(poem.id).padStart(3,'0');
+  const poem  = _poems[idx];
+  const num   = String(poem.id).padStart(3, '0');
   document.getElementById('r-num').textContent    = num;
   document.getElementById('r-title').textContent  = poem.title;
   document.getElementById('r-author').textContent = '— ' + poem.author;
   document.getElementById('r-body').textContent   = poem.body;
   document.getElementById('r-tag').textContent    = poem.tag;
   document.getElementById('r-prev').disabled      = idx <= 0;
-  document.getElementById('r-next').disabled      = idx >= poems.length - 1;
-  // Botón borrar — solo visible en modo admin
-  document.getElementById('btn-delete').style.display = isAdmin ? 'inline-flex' : 'none';
+  document.getElementById('r-next').disabled      = idx >= _poems.length - 1;
+  document.getElementById('btn-delete').style.display  = isAdmin ? 'inline-flex' : 'none';
+  document.getElementById('delete-confirm').style.display = 'none';
   toggle('reader-modal', true);
 }
-function closeReaderModal()     { toggle('reader-modal', false); }
-function closeReaderOnOverlay(e){ if(e.target===document.getElementById('reader-modal')) closeReaderModal(); }
-function readerNavigate(dir)    { const n=readerIndex+dir; if(n>=0&&n<getPoems().length) openReader(n); }
+function closeReaderModal()      { toggle('reader-modal', false); }
+function closeReaderOnOverlay(e) { if (e.target===document.getElementById('reader-modal')) closeReaderModal(); }
+function readerNavigate(dir)     { const n = readerIndex + dir; if (n >= 0 && n < _poems.length) openReader(n); }
 
 function confirmDelete() {
-  const confirm = document.getElementById('delete-confirm');
-  confirm.style.display = confirm.style.display === 'flex' ? 'none' : 'flex';
+  const c = document.getElementById('delete-confirm');
+  c.style.display = c.style.display === 'flex' ? 'none' : 'flex';
 }
-function executeDelete() {
-  const poem = getPoems()[readerIndex];
-  deletePoem(poem.id);
-  closeReaderModal();
-  renderPoems();
-  showToast('Poema eliminado.');
+
+async function executeDelete() {
+  const poem = _poems[readerIndex];
+  try {
+    await deletePoem(poem.id);
+    closeReaderModal();
+    await renderPoems();
+    showToast('Poema eliminado.');
+  } catch (e) {
+    showToast('Error al borrar: ' + e.message);
+  }
 }
 
 function printPoem() { window.print(); }
 
-/* ─── HELPER TOGGLE MODAL ─── */
+/* ─── HELPER ─── */
 function toggle(id, open) {
   document.getElementById(id).classList.toggle('open', open);
   document.body.style.overflow = open ? 'hidden' : '';
 }
-
-/* ─── TOAST ─── */
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -225,15 +261,15 @@ function showToast(msg) {
 /* ─── TECLADO ─── */
 document.addEventListener('keydown', e => {
   if (document.getElementById('pin-modal').classList.contains('open')) {
-    if (e.key>='0'&&e.key<='9') { e.preventDefault(); pinInput(e.key); }
-    if (e.key==='Backspace') pinDelete();
-    if (e.key==='Escape') closePinModal();
+    if (e.key >= '0' && e.key <= '9') { e.preventDefault(); pinInput(e.key); }
+    if (e.key === 'Backspace') pinDelete();
+    if (e.key === 'Escape') closePinModal();
   } else if (document.getElementById('add-modal').classList.contains('open')) {
-    if (e.key==='Escape') closeAddModal();
+    if (e.key === 'Escape') closeAddModal();
   } else if (document.getElementById('reader-modal').classList.contains('open')) {
-    if (e.key==='Escape') closeReaderModal();
-    if (e.key==='ArrowLeft')  readerNavigate(-1);
-    if (e.key==='ArrowRight') readerNavigate(1);
+    if (e.key === 'Escape') closeReaderModal();
+    if (e.key === 'ArrowLeft')  readerNavigate(-1);
+    if (e.key === 'ArrowRight') readerNavigate(1);
   }
 });
 
@@ -247,10 +283,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPoems();
 });
 
-/* Exponer para handlers inline */
+/* Exponer para inline handlers */
 Object.assign(window, {
-  openPinModal, closePinModal, closePinOnOverlay,
-  pinInput, pinDelete,
+  openPinModal, closePinModal, closePinOnOverlay, pinInput, pinDelete,
   closeAddModal, closeAddOnOverlay, submitPoem,
   closeReaderModal, closeReaderOnOverlay, readerNavigate,
   confirmDelete, executeDelete, printPoem

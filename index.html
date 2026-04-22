@@ -9,6 +9,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Marcellus&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="poemario.css" />
+  <style>
+    .poems-grid.loading { opacity: 0.4; pointer-events: none; transition: opacity .3s; }
+  </style>
 </head>
 <body>
 
@@ -164,6 +167,8 @@
 <div class="toast" id="toast"></div>
 
 <!-- Scripts en orden de dependencia -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.config.js"></script>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/particles.js"></script>
 <script src="assets/js/app.js"></script>
