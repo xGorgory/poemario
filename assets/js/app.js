@@ -130,7 +130,7 @@ async function renderPoems() {
           <div class="card-meta"><span class="card-number">Nº ${num}</span><span class="card-tag">${poem.tag}</span></div>
           <h2 class="poem-title">${poem.title}</h2>
           <div class="poem-excerpt">${poem.body.split('\n').slice(0,5).join('\n')}</div>
-          <div class="card-footer"><span class="card-author">${poem.author}</span><span class="card-date">${poem.date}</span></div>
+          <div class="card-footer"><span class="card-author">${poem.author}</span></div>
         </div>
         <div class="featured-right"><div class="featured-full-poem">${poem.body}</div></div>`;
     } else {
@@ -139,7 +139,7 @@ async function renderPoems() {
         <div class="card-meta"><span class="card-number">Nº ${num}</span><span class="card-tag">${poem.tag}</span></div>
         <h2 class="poem-title">${poem.title}</h2>
         <div class="poem-excerpt">${poem.body.split('\n').slice(0,5).join('\n')}</div>
-        <div class="card-footer"><span class="card-author">${poem.author}</span><span class="card-date">${poem.date}</span></div>`;
+        <div class="card-footer"><span class="card-author">${poem.author}</span></div>`;
     }
 
     card.addEventListener('click', () => openReader(idx));
@@ -150,8 +150,8 @@ async function renderPoems() {
 }
 
 /* ─── PIN ─── */
-function openPinModal()  { pinValue=''; updateDots(); document.getElementById('pin-error').textContent=''; toggle('pin-modal', true); }
-function closePinModal() { toggle('pin-modal', false); pinValue=''; updateDots(); }
+function openPinModal()  { if (isAdmin) { openAddModal(); return; } pinValue=''; pinBlocked=false; updateDots(); document.getElementById('pin-error').textContent=''; toggle('pin-modal', true); }
+function closePinModal() { toggle('pin-modal', false); pinValue=''; pinBlocked=false; updateDots(); }
 function closePinOnOverlay(e) { if (e.target===document.getElementById('pin-modal')) closePinModal(); }
 function updateDots() {
   for (let i=0; i<4; i++) {
